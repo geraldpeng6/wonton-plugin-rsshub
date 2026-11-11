@@ -19,8 +19,6 @@ services:
       WEIBO_COOKIES: ${WONTON_SECRET_WEIBO_COOKIES}
       ZHIHU_COOKIES: ${WONTON_SECRET_ZHIHU_COOKIES}
       GITHUB_ACCESS_TOKEN: ${WONTON_SECRET_GITHUB_TOKEN}
-      # B 站的 Cookie 按账号 UID 键入（上游规则 BILIBILI_COOKIE_<UID>），UID 在插件设置里填。
-      "BILIBILI_COOKIE_${WONTON_SETTING_BILIBILI_UID}": ${WONTON_SECRET_BILIBILI_COOKIE}
     healthcheck:
       # 镜像基于 node，没有 curl/wget；/healthz 也在 ACCESS_KEY 的检查范围内，必须带 key。
       test:
@@ -37,8 +35,8 @@ services:
       start_interval: 2s
 
 x-wonton:
-  # settings（插件设置页）是 0.12 引入的。
-  spec: "0.12"
+  # 插件密钥的用户填写项（input）和主人可见（show_owner）是 0.8 引入的。
+  spec: "0.8"
   id: app.rsshub.rsshub
   version: 0.1.0
   kind: app
@@ -113,15 +111,6 @@ x-wonton:
           en: "Optional; without it GitHub routes hit rate limits sooner."
         url: https://github.com/settings/tokens
         required: false
-    bilibili_cookie:
-      input:
-        title: { zh: B 站 Cookie, en: Bilibili cookie, zh-Hant: B 站 Cookie, ja: Bilibili Cookie }
-        description:
-          zh: 订阅需要登录的 B 站内容才需要；先在下面的设置里填这个账号的数字 UID。
-          en: "Only for login-required Bilibili content; also fill this account's numeric UID in the settings below."
-        required: false
-  # B 站 Cookie 按账号 UID 键入（BILIBILI_COOKIE_<UID>），UID 在设置里填。
-  settings: settings.schema.json
   # 上游没写最低内存；按本机空闲实测取整。
   requirements:
     arch: [amd64, arm64]

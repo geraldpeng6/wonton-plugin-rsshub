@@ -63,12 +63,16 @@ x-wonton:
       例子：追更 B 站UP主的投稿、看 GitHub 项目的发布和 Release、盯一个微博账号的动静，不用一个个打开网站。RSSHub 有上千条现成的路由，在它的首页可以查。
 
       有的网站要登录才能看（微博、知乎、B 站的部分内容），在插件的密钥里填上对应账号的 Cookie 才能订；抓不到的订阅会如实报错，不会假装正常。
+
+      跨插件订阅要用到云吞的插件间依赖能力，当前版本的核心还不支持（详见插件 README 的"已知限制"）；核心支持后即可在阅读器里直接订阅。
     en: |
       Turns sites without feeds into subscriptions. Add a feed address in your RSS reader plugin and updates arrive on their own.
 
       Examples: follow a Bilibili uploader's posts, watch GitHub releases, or keep an eye on a Weibo account without opening the sites. RSSHub ships thousands of ready-made routes, browsable from its home page.
 
       Some sites need login (Weibo, Zhihu, parts of Bilibili): fill in the matching account cookie in this plugin's secrets to subscribe those. Feeds that cannot be fetched report the error instead of pretending.
+
+      Cross-plugin subscription needs Wonton's inter-plugin dependency support, which the current core does not have yet (see the plugin README); it will work in readers once the core supports it.
   release_notes: { zh: 首个版本。, en: First release. }
   webui:
     service: rsshub

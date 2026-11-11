@@ -1,43 +1,60 @@
-# 云吞插件模板
+# 万物订阅源（RSSHub）
 
-开发流程见[插件开发指南](https://github.com/wontonapp/wonton-docs/blob/main/develop.md)。
+把没有订阅源的网站变成订阅源：B 站UP主、微博、知乎、GitHub 的更新，像订报纸一样送进你的 RSS 阅读器插件。
 
-这是一个能安装的示例插件 `app.example.hello`：使用 nginx 官方镜像显示问候页，经网关的 `sso: proxy` 注入用户名，页面显示“你好，<用户名>”。示例没有应用账号、持久化数据或 MCP 工具。
+- 上游项目：[RSSHub](https://docs.rsshub.app)（AGPL-3.0-only，本插件以独立容器运行它的官方镜像）
+- 本插件包许可证：MIT（见 [LICENSE](LICENSE)）
 
-## 示例文件
+## 它是干什么的
 
-| 路径 | 内容 |
-| --- | --- |
-| `docker-compose.yml` | 示例清单、nginx 服务和三个 `configs` |
-| `web/default.conf.template` | nginx 配置，启用 SSI 回显用户名并提供健康检查入口；只放行来自核心地址（`${WONTON_CORE_ADDRESS}`）的请求，其余来源 403 |
-| `web/index.html` | 问候页 |
-| `web/tokens.css` | 页面主题变量的后备值 |
-| `tabs/` | 示例主页的应用页面图标 |
-| `screenshots/home.png` | 商店详情页的示例截图 |
-| `scripts/smoke-probes.sh` | 检查真实页面和网关注入身份的插件探针 |
+很多网站没有订阅源，RSSHub 给它们造了一个：上千条现成的"路由"，每条对应一类更新——B 站UP主的投稿、GitHub 项目的 Release、微博账号、知乎动态、播客、期刊……路由清单在 RSSHub 首页（打开本插件的网页就能看）和 [docs.rsshub.app](https://docs.rsshub.app/routes)。
 
-从模板创建自己的插件后，替换示例清单、网页和素材；具体步骤见[写插件](https://github.com/wontonapp/wonton-docs/blob/main/develop.md#写插件)。
+RSSHub 只负责"造订阅源"，看订阅要配 RSS 阅读器（比如本家的 RSS 订阅、Miniflux 插件）。
 
-## 对着别的栈跑探针
+## 怎么用
 
-`probes`、`api`、`session` 按 `.wonton/.env` 的 `WONTON_BASE_DOMAIN` 拼核心地址，`up` 起的栈自己写这个键。插件装进别人的栈、或者对着已有环境排查时，把那套栈的基础域名写进 `.wonton/.env`，不要只按实例名猜地址：实例名只是资源名前缀，网关按 Host 认域名，拼错了会回“没有安装”。
+1. 装好本插件和一个 RSS 阅读器插件。
+2. 在本插件的详情页里复制**订阅密钥**（ACCESS_KEY）。
+3. 在阅读器里添加订阅地址，格式：
 
-```bash
-WONTON_BASE_DOMAIN=wonton.localhost
-```
+   ```
+   http://x-wonton.rsshub.wonton.internal:1200/<路由>?key=<订阅密钥>
+   ```
 
-## 核心镜像
+   例子（GitHub 上 DIYgod 的仓库动态）：
 
-检查和冒烟默认用套件里的核心镜像（`ghcr.io/wontonapp/wonton-core:main`）；要固定别的核心镜像，在仓库 Settings → Variables 设 `WONTON_CORE_IMAGE`，手动触发“检查”时填的 `core-image` 输入优先。
+   ```
+   http://x-wonton.rsshub.wonton.internal:1200/github/repos/DIYgod?key=<订阅密钥>
+   ```
 
-## 更新开发套件
+4. 要登录的网站先按下一节填好凭据。
 
-```bash
-scripts/dev.sh kit-update
-```
+订阅地址带 `?key=` 是因为本插件开了访问控制（ACCESS_KEY）：家里的服务不该无门槛对外开放，拿到密钥的阅读器才能订阅。
 
-在从模板新建的插件仓库中更新套件；本仓库是套件源头，执行时只提示并退出。版本、可选引用和自定义脚本约定见[开发指南](https://github.com/wontonapp/wonton-docs/blob/main/develop.md#更新开发套件)。
+## 要登录的网站（可选，默认不填）
 
-## 图标
+在插件详情页的**密钥**里填，订阅才不会报错：
 
-`icon.svg` 是本仓库原创线条图标，按本仓库 MIT 许可证分发，见 [NOTICE](NOTICE)。
+| 密钥 | 填什么 | 怎么拿 |
+| --- | --- | --- |
+| 微博 Cookie | 浏览器登录微博后，请求头里 `Cookie:` 的整串原文 | 浏览器开发者工具 → 网络 → 任一请求 → 请求标头 |
+| 知乎 Cookie | 同上，登录知乎 | 同上 |
+| GitHub 访问令牌 | 可选。不填也能订 GitHub 路由，但容易限流 | [github.com/settings/tokens](https://github.com/settings/tokens) |
+| B 站 Cookie | 需要登录的 B 站内容才需要；同时要在插件的**设置**里填这个账号的数字 UID | 同微博 |
+
+这些凭据存在核心的密钥库里，App 里只有主人能填、能改；填错时对应的订阅会报鉴权错误。
+
+## 数据在哪、要不要备份
+
+没有要备份的数据：RSSHub 不存东西，抓到的内容缓存在内存里（几分钟），插件升级、重装都不影响阅读器里已有的订阅和文章（那些存在阅读器插件里）。
+
+## 已知限制
+
+- **阅读器还没法直接订**：插件之间网络互相隔离，阅读器插件要在自己的清单里声明对本插件能力（`x-wonton.rsshub`）的依赖，内网地址才解析得到。商店里现有的阅读器插件还没声明——订阅地址会解析失败；这已在插件的底座反馈里记录，等阅读器插件跟上。
+- 少数路由要无头浏览器（上游另有带 chromium 的镜像，本插件没带），会如实报错。
+- B 站的 Cookie 按账号 UID 键入，设置里只放得下一个 UID：多个 B 站账号的登录内容订不了。
+- 目标网站的风控随时会变，个别路由抓不到时 RSSHub 会如实返回错误，阅读器里能看到原因。
+
+## 图标和商标
+
+图标来自 RSSHub 的官方标志（来源、许可和商标说明见 [NOTICE](NOTICE)）。

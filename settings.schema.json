@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "bilibili_uid": {
+      "type": "string",
+      "pattern": "^[0-9]*$",
+      "default": "",
+      "x-wonton-title": {
+        "zh": "B 站 UID",
+        "en": "Bilibili UID",
+        "zh-Hant": "B 站 UID",
+        "ja": "Bilibili UID"
+      },
+      "x-wonton-description": {
+        "zh": "要订需要登录的 B 站内容时，填 B 站 Cookie 那个账号的数字 UID（App 里个人主页可见）。",
+        "en": "For login-required Bilibili content, the numeric UID of the account whose cookie is filled in the secrets.",
+        "zh-Hant": "要訂需要登入的 B 站內容時，填 B 站 Cookie 那個帳號的數字 UID（App 裡個人主頁可見）。",
+        "ja": "ログインが必要な Bilibili のコンテンツを購読するには、Cookie を設定したアカウントの数字 UID を入力してください。"
+      }
+    }
+  }
+}

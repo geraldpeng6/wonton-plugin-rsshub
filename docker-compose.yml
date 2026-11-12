@@ -35,8 +35,9 @@ services:
       start_interval: 2s
 
 x-wonton:
-  # 插件密钥的用户填写项（input）和主人可见（show_owner）是 0.8 引入的。
-  spec: "0.8"
+  # 0.8：密钥的用户填写项（input）和主人可见（show_owner）；
+  # 0.11：provides 第三方能力（能力依赖），旧核心会如实提示升级。
+  spec: "0.11"
   id: app.rsshub.rsshub
   version: 0.1.0
   kind: app
@@ -64,7 +65,7 @@ x-wonton:
 
       有的网站要登录才能看（微博、知乎、B 站的部分内容），在插件的密钥里填上对应账号的 Cookie 才能订；抓不到的订阅会如实报错，不会假装正常。
 
-      跨插件订阅要用到云吞的插件间依赖能力，当前版本的核心还不支持（详见插件 README 的"已知限制"）；核心支持后即可在阅读器里直接订阅。
+      RSS 阅读器插件声明依赖本插件的能力（`wants: [x-wonton.rsshub]`）后，就能按云吞内网地址直接订阅，不用走外网（方法见插件 README）。
     en: |
       Turns sites without feeds into subscriptions. Add a feed address in your RSS reader plugin and updates arrive on their own.
 
@@ -72,7 +73,7 @@ x-wonton:
 
       Some sites need login (Weibo, Zhihu, parts of Bilibili): fill in the matching account cookie in this plugin's secrets to subscribe those. Feeds that cannot be fetched report the error instead of pretending.
 
-      Cross-plugin subscription needs Wonton's inter-plugin dependency support, which the current core does not have yet (see the plugin README); it will work in readers once the core supports it.
+      An RSS reader plugin that declares this capability (`wants: [x-wonton.rsshub]`) can subscribe over Wonton's internal network instead of the public internet (see the plugin README).
   release_notes: { zh: 首个版本。, en: First release. }
   webui:
     service: rsshub

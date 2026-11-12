@@ -15,19 +15,20 @@ RSSHub 只负责"造订阅源"，看订阅要配 RSS 阅读器（比如本家的
 
 1. 装好本插件和一个 RSS 阅读器插件。
 2. 在本插件的详情页里复制**订阅密钥**（ACCESS_KEY）。
-3. 在阅读器里添加订阅地址，格式：
+3. 阅读器插件要声明依赖本插件的能力，云吞才允许它访问本插件的内网别名（方法见文末"给阅读器插件作者"）。
+4. 在阅读器里添加订阅地址，格式：
 
    ```
-   http://x-wonton.rsshub.wonton.internal:1200/<路由>?key=<订阅密钥>
+   http://x-wonton.rsshub.wonton.internal/<路由>?key=<订阅密钥>
    ```
 
-   例子（GitHub 上 DIYgod 的仓库动态）：
+   端口和云吞网关一致（阅读器容器的环境变量 `WONTON_X_WONTON_RSSHUB_URL` 里有完整地址，含端口，不要手写 1200）。例子（GitHub 上 DIYgod 的仓库动态）：
 
    ```
-   http://x-wonton.rsshub.wonton.internal:1200/github/repos/DIYgod?key=<订阅密钥>
+   http://x-wonton.rsshub.wonton.internal/github/repos/DIYgod?key=<订阅密钥>
    ```
 
-4. 要登录的网站先按下一节填好凭据。
+5. 要登录的网站先按下一节填好凭据。
 
 订阅地址带 `?key=` 是因为本插件开了访问控制（ACCESS_KEY）：家里的服务不该无门槛对外开放，拿到密钥的阅读器才能订阅。
 
@@ -49,10 +50,20 @@ RSSHub 只负责"造订阅源"，看订阅要配 RSS 阅读器（比如本家的
 
 ## 已知限制
 
-- **跨插件订阅还走不通**：插件之间网络互相隔离，按规范要用能力声明（`provides`/`wants`）让核心在内网做转发。当前核心还不支持插件间依赖：声明了 `provides` 的清单装不上（装报 `unsupported`），不声明也一样——别的插件解析不到本插件的内网地址（能力别名和服务名都报 DNS 失败，实测见插件的底座反馈）。核心支持后，阅读器里按 README 的地址格式订阅即可。
-- B 站要登录的内容订不了：上游按账号 UID 把 Cookie 键入环境变量名（`BILIBILI_COOKIE_<UID>`），而插件的设置页（规范 0.12 的 settings）在当前核心里还没实现，装不上也填不了 UID。公开的 B 站路由（投稿、UP主动态）不受影响。
+- **跨插件订阅要阅读器插件配合**：插件之间网络互相隔离，阅读器要在自己的清单里声明 `wants: [x-wonton.rsshub]`，云吞才把本插件的能力别名开给它的网络（未声明的插件连别名域名都解析不到，实测如此）。自带"禁止访问私网地址"防护的阅读器还要在自己的 compose 里放行（Miniflux 是 `FETCHER_ALLOW_PRIVATE_NETWORKS: "1"`），详见文末。
+- B 站要登录的内容订不了：上游按账号 UID 把 Cookie 键入环境变量名（`BILIBILI_COOKIE_<UID>`），UID 只能来自用户的输入，而云吞注入的环境变量名是固定的，表达不了"按 UID 拼名字"。公开的 B 站路由（投稿、UP主动态）不受影响。
 - 少数路由要无头浏览器（上游另有带 chromium 的镜像，本插件没带），会如实报错。
 - 目标网站的风控随时会变，个别路由抓不到时 RSSHub 会如实返回错误，阅读器里能看到原因。
+
+## 给阅读器插件作者
+
+阅读器要能订到本插件，三件事都要做：
+
+1. 清单声明依赖：`wants: [x-wonton.rsshub]`（`spec` 写 `"0.11"` 以上）。声明后云吞在你的插件网络里开通能力别名，并把完整地址注入环境变量 `WONTON_X_WONTON_RSSHUB_URL`（未连接时是空串）。
+2. compose 里把变量传给应用：`environment: { RSSHUB_URL: "${WONTON_X_WONTON_RSSHUB_URL}" }`。订阅地址 = `<RSSHUB_URL>/<路由>?key=<订阅密钥>`。
+3. 应用自带"禁私网地址"防护的（Miniflux 2.3.5 是 `FETCHER_ALLOW_PRIVATE_NETWORKS`，默认关）：在自己 compose 里放行，否则它拒绝抓内网别名，订阅报 "refusing to access private network host"。
+
+已在开发环境实测：Miniflux 声明 `wants` 后订阅 `…/github/repos/DIYgod?key=…`，文章正常入库；同一容器不声明 `wants` 时别名域名解析失败。
 
 ## 图标和商标
 
